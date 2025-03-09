@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-12 p-6 bg-white rounded-lg shadow-xl sm:max-w-lg md:max-w-xl">
+    <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg animate-fadeIn">
+        <h2 class="text-2xl sm:text-3xl font-semibold"><i class="fas fa-map-marker-alt mr-3"></i>Request a Trip</h2>
+    </header>
+    <div class="p-6">
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Start Location</label>
+                <input type="text" name="start" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">End Location</label>
+                <input type="text" name="end" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Preferred Date</label>
+                <input type="date" name="preferred_date" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Seats Needed</label>
+                <input type="number" name="seats_needed" min="1" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Cargo Weight (kg)</label>
+                <input type="number" name="cargo_weight" min="0" step="0.1" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+            </div>
+            <button type="submit" class="btn-primary w-full py-3 hover:bg-blue-700 transition duration-300">
+                <i class="fas fa-paper-plane mr-2"></i>Submit Request
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

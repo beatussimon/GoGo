@@ -1,0 +1,77 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-12 p-6 bg-white rounded-lg shadow-xl sm:max-w-5xl">
+    <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg animate-fadeIn">
+        <h2 class="text-2xl sm:text-3xl font-semibold"><i class="fas fa-newspaper mr-3"></i>Feed</h2>
+    </header>
+    <div class="p-6">
+        <form method="post" enctype="multipart/form-data" class="mb-6 space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Share Your Journey</label>
+                <textarea name="content" placeholder="Write something..." class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Image</label>
+                <input type="file" name="image" accept="image/*" class="w-full p-3 border rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Video</label>
+                <input type="file" name="video" accept="video/*" class="w-full p-3 border rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Trip</label>
+                <select name="trip" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    <option value="">Select a Trip</option>
+                    {% for trip in trips %}
+                        <option value="{{ trip.id }}">{{ trip.start }} to {{ trip.end }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn-primary w-full py-3 hover:bg-blue-700 transition duration-300">
+                <i class="fas fa-paper-plane mr-2"></i>Post
+            </button>
+        </form>
+        <div class="space-y-6" id="post-container">
+            {% for post in posts %}
+                <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300 fade-in-post" data-index="{{ forloop.counter0 }}">
+                    <p class="text-gray-800">{{ post.content }}</p>
+                    {% if post.image %}
+                        <img src="{{ post.image.url }}" alt="Post Image" class="mt-2 w-full h-48 object-cover rounded-lg">
+                    {% endif %}
+                    {% if post.video %}
+                        <video controls class="mt-2 w-full h-48 object-cover rounded-lg">
+                            <source src="{{ post.video.url }}" type="video/mp4">
+                        </video>
+                    {% endif %}
+                    <p class="text-gray-600 mt-2">Trip: {{ post.trip.start }} to {{ post.trip.end|default:"N/A" }}</p>
+                    <p class="text-gray-500 text-sm">{{ post.created_at|date:'F d, Y H:i' }}</p>
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center">No posts yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .fade-in-post {
+        animation: fadeIn 0.5s ease-in forwards;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const posts = document.querySelectorAll('.fade-in-post');
+        posts.forEach(post => {
+            const index = post.getAttribute('data-index');
+            post.style.animationDelay = `${index * 100}ms`;
+        });
+    });
+</script>
+{% endblock %}

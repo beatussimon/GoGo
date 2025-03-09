@@ -1,0 +1,70 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto mt-12 px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="col-span-1 md:col-span-2">
+        <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg animate-fadeIn">
+            <h2 class="text-2xl sm:text-3xl font-semibold"><i class="fas fa-home mr-3"></i>Welcome</h2>
+        </header>
+        <div class="bg-white p-6 rounded-b-lg shadow-xl">
+            <h3 class="text-xl sm:text-2xl font-semibold mb-4">Available Trips</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for trip in trips %}
+                    <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                        <p class="text-gray-800">{{ trip.start }} to {{ trip.end }}</p>
+                        <p class="text-gray-600">Seats: {{ trip.seats }} | Price: {{ trip.price_per_seat }} TZS</p>
+                        <a href="{% url 'core:book_trip' trip.id %}" class="text-blue-600 hover:underline mt-2 inline-block">Book</a>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-600 text-center col-span-full">No trips available.</p>
+                {% endfor %}
+            </div>
+            <h3 class="text-xl sm:text-2xl font-semibold mt-8 mb-4">Trip Requests</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for request in trip_requests %}
+                    <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                        <p class="text-gray-800">{{ request.start }} to {{ request.end }}</p>
+                        <p class="text-gray-600">Date: {{ request.preferred_date }}</p>
+                        <p class="text-gray-600">By: {{ request.passenger.username }}</p>
+                        {% if user.profile.is_driver and user.profile.verified %}
+                            <a href="{% url 'core:fulfill_trip_request' request.id %}" class="text-blue-600 hover:underline mt-2 inline-block">Fulfill</a>
+                        {% endif %}
+                        <a href="{% url 'core:chat' %}?trip_request={{ request.id }}" class="text-blue-600 hover:underline mt-2 inline-block ml-2">Contact</a>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-600 text-center col-span-full">No requests.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-span-1">
+        <div class="bg-white p-6 rounded-lg shadow-xl">
+            <h3 class="text-xl sm:text-2xl font-semibold mb-4">Clans</h3>
+            <div class="space-y-4">
+                {% for clan in clans %}
+                    <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                        <p class="text-gray-800">{{ clan.name }}</p>
+                        <a href="{% url 'core:join_clan' clan.id %}" class="text-blue-600 hover:underline mt-2 inline-block">Join</a>
+                    </div>
+                {% empty %}
+                    <p class="text-gray-600 text-center">No clans.</p>
+                {% endfor %}
+            </div>
+            <h3 class="text-xl sm:text-2xl font-semibold mt-8 mb-4">Ads</h3>
+            <div class="space-y-4">
+                {% for ad in ads %}
+                    <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                        <p class="text-gray-800 font-semibold">{{ ad.title }}</p>
+                        <p class="text-gray-600">{{ ad.content }}</p>
+                        {% if ad.image %}
+                            <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="mt-2 w-full h-32 object-cover rounded-lg">
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <p class="text-gray-600 text-center">No ads available.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

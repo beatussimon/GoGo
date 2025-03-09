@@ -1,0 +1,154 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto mt-12 p-6 bg-white rounded-lg shadow-xl sm:max-w-3xl md:max-w-4xl">
+    <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg animate-fadeIn">
+        <h2 class="text-2xl sm:text-3xl font-semibold"><i class="fas fa-plus mr-3"></i>Create a New Trip</h2>
+    </header>
+    <div class="p-6">
+        <div class="step-indicator flex justify-between mb-6 text-sm text-gray-600">
+            <span class="step {% if step == 1 %}active{% endif %}">1. Basics</span>
+            <span class="step {% if step == 2 %}active{% endif %}">2. Details</span>
+            <span class="step {% if step == 3 %}active{% endif %}">3. Review</span>
+        </div>
+        <form method="post" id="new-trip-form" class="space-y-6" data-step="{{ step|default:'1' }}">
+            {% csrf_token %}
+            <!-- Step 1: Basics -->
+            <div id="step-1" class="step-content">
+                <h3 class="text-xl font-semibold mb-4">Tell us where you're going</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Starting Point</label>
+                        <input type="text" name="start" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Enter starting location" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Destination</label>
+                        <input type="text" name="end" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" placeholder="Enter destination" required>
+                    </div>
+                    <button type="button" id="next-step-1" class="btn-primary w-full py-3 hover:bg-blue-700 transition duration-300">
+                        <i class="fas fa-arrow-right mr-2"></i>Next
+                    </button>
+                </div>
+            </div>
+            <!-- Step 2: Details -->
+            <div id="step-2" class="step-content hidden">
+                <h3 class="text-xl font-semibold mb-4">Add trip details</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Departure Time</label>
+                        <input type="datetime-local" name="departure" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Available Seats</label>
+                        <input type="number" name="seats" value="4" min="1" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Cargo Capacity (kg)</label>
+                        <input type="number" name="cargo_capacity" value="50" min="0" step="0.1" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Price per Seat (TZS)</label>
+                        <input type="number" name="price_per_seat" value="5000" min="0" step="0.01" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Price per kg (TZS)</label>
+                        <input type="number" name="price_per_kg" value="200" min="0" step="0.01" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" name="auction_mode" class="mr-2">
+                        <label class="text-sm text-gray-700">Enable Auction Mode</label>
+                    </div>
+                    <div class="flex justify-between">
+                        <button type="button" id="prev-step-2" class="py-2 px-4 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition duration-300">
+                            <i class="fas fa-arrow-left mr-2"></i>Back
+                        </button>
+                        <button type="button" id="next-step-2" class="btn-primary py-2 px-4 hover:bg-blue-700 transition duration-300">
+                            <i class="fas fa-arrow-right mr-2"></i>Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Step 3: Review -->
+            <div id="step-3" class="step-content hidden">
+                <h3 class="text-xl font-semibold mb-4">Review and Submit</h3>
+                <div class="space-y-4">
+                    <p><strong>Starting Point:</strong> <span id="review-start"></span></p>
+                    <p><strong>Destination:</strong> <span id="review-end"></span></p>
+                    <p><strong>Departure Time:</strong> <span id="review-departure"></span></p>
+                    <p><strong>Seats:</strong> <span id="review-seats"></span></p>
+                    <p><strong>Cargo Capacity:</strong> <span id="review-cargo"></span> kg</p>
+                    <p><strong>Price per Seat:</strong> <span id="review-price-seat"></span> TZS</p>
+                    <p><strong>Price per kg:</strong> <span id="review-price-kg"></span> TZS</p>
+                    <p><strong>Auction Mode:</strong> <span id="review-auction"></span></p>
+                    <button type="submit" class="btn-primary w-full py-3 hover:bg-green-700 transition duration-300">
+                        <i class="fas fa-check-circle mr-2"></i>Create Trip
+                    </button>
+                    <button type="button" id="prev-step-3" class="w-full py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition duration-300 mt-2">
+                        <i class="fas fa-arrow-left mr-2"></i>Back
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let currentStep = parseInt(document.getElementById('new-trip-form').dataset.step) || 1;
+
+        function showStep(step) {
+            document.querySelectorAll('.step-content').forEach(content => content.classList.add('hidden'));
+            document.getElementById(`step-${step}`).classList.remove('hidden');
+            currentStep = step;
+            document.getElementById('new-trip-form').dataset.step = step;
+            updateReview();
+        }
+
+        document.getElementById('next-step-1')?.addEventListener('click', () => {
+            const start = document.querySelector('input[name="start"]').value;
+            const end = document.querySelector('input[name="end"]').value;
+            if (start && end) showStep(2);
+            else alert('Please enter both starting point and destination.');
+        });
+
+        document.getElementById('prev-step-2')?.addEventListener('click', () => showStep(1));
+        document.getElementById('next-step-2')?.addEventListener('click', () => showStep(3));
+        document.getElementById('prev-step-3')?.addEventListener('click', () => showStep(2));
+
+        function updateReview() {
+            document.getElementById('review-start').textContent = document.querySelector('input[name="start"]')?.value || 'Not set';
+            document.getElementById('review-end').textContent = document.querySelector('input[name="end"]')?.value || 'Not set';
+            document.getElementById('review-departure').textContent = document.querySelector('input[name="departure"]')?.value || 'Not set';
+            document.getElementById('review-seats').textContent = document.querySelector('input[name="seats"]')?.value || '4';
+            document.getElementById('review-cargo').textContent = document.querySelector('input[name="cargo_capacity"]')?.value || '50';
+            document.getElementById('review-price-seat').textContent = document.querySelector('input[name="price_per_seat"]')?.value || '5000';
+            document.getElementById('review-price-kg').textContent = document.querySelector('input[name="price_per_kg"]')?.value || '200';
+            document.getElementById('review-auction').textContent = document.querySelector('input[name="auction_mode"]')?.checked ? 'Yes' : 'No';
+        }
+
+        document.querySelectorAll('input, select').forEach(input => {
+            input.addEventListener('change', updateReview);
+        });
+        showStep(currentStep);
+        updateReview();
+    });
+</script>
+
+<style>
+    .step-indicator .step {
+        padding: 5px 10px;
+        border-radius: 5px;
+        background-color: #e5e7eb;
+    }
+    .step-indicator .active {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .step-content {
+        transition: opacity 0.3s ease;
+    }
+    .hidden {
+        display: none;
+    }
+</style>
+{% endblock %}

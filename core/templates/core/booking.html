@@ -1,0 +1,146 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto mt-12 p-6 bg-gray-100 rounded-lg shadow-xl">
+    <!-- Header -->
+    <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+        <h2 class="text-3xl font-semibold"><i class="fas fa-ticket-alt mr-3"></i>Book a Trip</h2>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex flex-col md:flex-row p-6 space-y-6 md:space-y-0 md:space-x-6">
+        <!-- Left: Trip Details -->
+        <div class="w-full md:w-1/2 bg-white p-6 rounded-lg">
+            {% if trip %}
+                <h3 class="text-xl font-bold">{{ trip.start }} to {{ trip.end }}</h3>
+                <p class="text-gray-600">Seats: {{ trip.seats }} | Cargo: {{ trip.cargo_capacity }} kg</p>
+                <p class="text-gray-600">Price: {{ trip.price_per_seat }} TZS/seat | {{ trip.price_per_kg }} TZS/kg</p>
+                {% if trip.auction_mode %}
+                    <p class="text-gray-600 font-semibold">Auction Mode: Place your bid!</p>
+                {% endif %}
+                {% if trip.driver %}
+                    <div class="mt-4">
+                        <p class="text-gray-700">Driver: <a href="{% url 'user_profile' trip.driver.id %}" class="text-blue-600">{{ trip.driver.name }}</a></p>
+                        <button class="btn-primary mt-2" onclick="openMessage('{{ trip.driver.id }}')">Contact Driver</button>
+                    </div>
+                {% endif %}
+                <form method="post" class="space-y-4 mt-4" id="booking-form">
+                    {% csrf_token %}
+                    <div>
+                        <label for="seats" class="block text-sm font-medium text-gray-700">Seats</label>
+                        <input type="number" id="seats" name="seats" min="1" max="{{ trip.seats }}" value="1" class="w-full p-3 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label for="cargo_weight" class="block text-sm font-medium text-gray-700">Cargo Weight (kg)</label>
+                        <input type="number" id="cargo_weight" name="cargo_weight" min="0" max="{{ trip.cargo_capacity }}" step="0.1" value="0" class="w-full p-3 border rounded-lg">
+                    </div>
+                    {% if trip.auction_mode %}
+                        <div>
+                            <label for="bid" class="block text-sm font-medium text-gray-700">Bid (TZS)</label>
+                            <input type="number" id="bid" name="bid" min="1" step="0.01" value="1" class="w-full p-3 border rounded-lg" required>
+                        </div>
+                    {% endif %}
+                    <p class="text-gray-700">Total: <span id="total-cost">0.00 TZS</span></p>
+                    <label class="flex items-center text-sm text-gray-700">
+                        <input type="checkbox" id="confirm_payment" name="confirm_payment" class="mr-2" required> I confirm payment
+                    </label>
+                    <button type="submit" class="btn-primary w-full py-3">Confirm Booking</button>
+                </form>
+            {% else %}
+                <p class="text-gray-600 text-center">Trip not available.</p>
+            {% endif %}
+        </div>
+
+        <!-- Right: Notifications & Messages -->
+        <div class="w-full md:w-1/2 flex flex-col space-y-6">
+            <!-- Notifications -->
+            <div class="bg-white p-6 rounded-lg">
+                <h3 class="text-lg font-semibold">Notifications</h3>
+                <div id="notifications" class="space-y-2 max-h-40 overflow-y-auto">
+                    {% for notification in user_notifications %}
+                        <div class="p-2 border-b flex justify-between">
+                            <span>{{ notification.message }} - {{ notification.timestamp|timesince }} ago</span>
+                            <button onclick="clearNotification('{{ notification.id }}')" class="text-red-500">Clear</button>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button onclick="toggleOldNotifications()" class="text-blue-600 mt-2">View Old</button>
+            </div>
+
+            <!-- Messages -->
+            <div class="bg-white p-6 rounded-lg flex-1">
+                <h3 class="text-lg font-semibold">Messages</h3>
+                <div id="messages" class="space-y-2 max-h-40 overflow-y-auto">
+                    {% for message in user_messages %}
+                        <div class="p-2 border-b">
+                            <a href="{% url 'user_profile' message.sender.id %}" class="text-blue-600">{{ message.sender.name }}</a>: {{ message.content }} 
+                            <span class="text-gray-500 text-sm">({{ message.timestamp|timesince }} ago)</span>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button onclick="openMessageComposer()" class="btn-primary mt-2">New Message</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if trip %}
+{{ trip.auction_mode|json_script:"auction_mode" }}
+{{ trip.price_per_seat|json_script:"price_per_seat" }}
+{{ trip.price_per_kg|json_script:"price_per_kg" }}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('booking-form');
+        const seatsInput = document.getElementById('seats');
+        const cargoInput = document.getElementById('cargo_weight');
+        const bidInput = document.getElementById('bid');
+        const totalCostSpan = document.getElementById('total-cost');
+
+        if (!form || !seatsInput || !cargoInput || !totalCostSpan) {
+            console.error('Form elements missing');
+            return;
+        }
+
+        const pricePerSeat = JSON.parse(document.getElementById('price_per_seat').textContent);
+        const pricePerKg = JSON.parse(document.getElementById('price_per_kg').textContent);
+        const auctionMode = JSON.parse(document.getElementById('auction_mode').textContent);
+        const maxSeats = parseInt(seatsInput.max) || Infinity;
+        const maxCargo = parseFloat(cargoInput.max) || Infinity;
+
+        function updateTotalCost() {
+            let seats = parseInt(seatsInput.value) || 0;
+            let cargo = parseFloat(cargoInput.value) || 0;
+            let bid = bidInput ? parseFloat(bidInput.value) || 0 : 0;
+
+            if (seats > maxSeats) seatsInput.value = seats = maxSeats;
+            if (cargo > maxCargo) cargoInput.value = cargo = maxCargo;
+
+            let total = auctionMode && bidInput ? bid : (seats * pricePerSeat) + (cargo * pricePerKg);
+            totalCostSpan.textContent = (isNaN(total) ? 0 : total).toFixed(2) + ' TZS';
+        }
+
+        seatsInput.addEventListener('input', updateTotalCost);
+        cargoInput.addEventListener('input', updateTotalCost);
+        if (bidInput) bidInput.addEventListener('input', updateTotalCost);
+        updateTotalCost();
+
+        // Messaging and Notifications Functions
+        window.openMessage = (userId) => {
+            window.location.href = `/messages/compose?to=${userId}`;
+        };
+        window.openMessageComposer = () => {
+            window.location.href = '/messages/compose';
+        };
+        window.clearNotification = (id) => {
+            fetch(`/notifications/clear/${id}`, { method: 'POST' })
+                .then(() => document.getElementById('notifications').querySelector(`[data-id="${id}"]`)?.remove());
+        };
+        window.toggleOldNotifications = () => {
+            document.getElementById('notifications').classList.toggle('max-h-40');
+        };
+    });
+</script>
+{% endif %}
+{% endblock %}

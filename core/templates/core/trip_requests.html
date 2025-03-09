@@ -1,0 +1,29 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-12 p-6 bg-white rounded-lg shadow-xl sm:max-w-5xl">
+    <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg animate-fadeIn">
+        <h2 class="text-2xl sm:text-3xl font-semibold"><i class="fas fa-list mr-3"></i>Trip Requests</h2>
+    </header>
+    <div class="p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {% for request in trip_requests %}
+                <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                    <p class="text-gray-800">{{ request.start }} to {{ request.end }}</p>
+                    <p class="text-gray-600">Date: {{ request.preferred_date }}</p>
+                    <p class="text-gray-600">Seats: {{ request.seats_needed }} | Cargo: {{ request.cargo_weight }} kg</p>
+                    <p class="text-gray-600">Passenger: {{ request.passenger.username }}</p>
+                    <a href="{% url 'core:fulfill_trip_request' request.id %}" class="text-blue-600 hover:underline mt-2 inline-block">
+                        <i class="fas fa-check-circle mr-1"></i>Fulfill Request
+                    </a>
+                    <a href="{% url 'core:chat' %}?trip_request={{ request.id }}" class="text-blue-600 hover:underline mt-2 inline-block ml-2">
+                        <i class="fas fa-comments mr-1"></i>Contact
+                    </a>
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center col-span-full">No pending trip requests.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gogo{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .btn-primary { background-color: #2563eb; color: white; border-radius: 0.5rem; }
+        .dropdown:hover .dropdown-menu { display: block; }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .message { transition: opacity 0.5s ease-out; }
+        .message.hide { opacity: 0; }
+        .notification-bell { position: relative; }
+        .notification-count { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; text-align: center; line-height: 16px; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-100 font-sans">
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'core:home' %}" class="text-2xl font-bold"><i class="fas fa-road mr-2"></i>Gogo</a>
+                </div>
+                <div class="hidden md:flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'core:home' %}" class="hover:text-gray-200"><i class="fas fa-home"></i> Home</a>
+                        <div class="relative dropdown">
+                            <a href="#" class="hover:text-gray-200"><i class="fas fa-road"></i> Trips</a>
+                            <div class="dropdown-menu absolute hidden bg-white text-gray-800 shadow-lg rounded-lg mt-2">
+                                <a href="{% url 'core:trips' %}" class="block px-4 py-2 hover:bg-gray-100">Browse Trips</a>
+                                <a href="{% url 'core:new_trip' %}" class="block px-4 py-2 hover:bg-gray-100">New Trip</a>
+                                <a href="{% url 'core:request_trip' %}" class="block px-4 py-2 hover:bg-gray-100">Request Trip</a>
+                            </div>
+                        </div>
+                        <a href="{% url 'core:feed' %}" class="hover:text-gray-200"><i class="fas fa-newspaper"></i> Feed</a>
+                        <a href="{% url 'core:chat' %}" class="hover:text-gray-200"><i class="fas fa-comments"></i> Chat</a>
+                        <a href="{% url 'core:profile' %}" class="hover:text-gray-200"><i class="fas fa-user"></i> Profile</a>
+                        <div class="notification-bell">
+                            <a href="{% url 'core:profile' %}" class="hover:text-gray-200"><i class="fas fa-bell"></i></a>
+                            {% if notifications.count > 0 %}
+                                <span class="notification-count">{{ notifications.count }}</span>
+                            {% endif %}
+                        </div>
+                        {% if user.is_staff %}
+                            <a href="{% url 'core:admin_dashboard' %}" class="hover:text-gray-200"><i class="fas fa-user-shield"></i> Admin</a>
+                        {% endif %}
+                        <a href="{% url 'core:logout' %}" class="hover:text-gray-200"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    {% else %}
+                        <a href="{% url 'core:login' %}" class="hover:text-gray-200"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a href="{% url 'core:register' %}" class="hover:text-gray-200"><i class="fas fa-user-plus"></i> Register</a>
+                    {% endif %}
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="menu-btn" class="text-white focus:outline-none">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-white text-gray-800 shadow-lg">
+            {% if user.is_authenticated %}
+                <a href="{% url 'core:home' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-home"></i> Home</a>
+                <a href="{% url 'core:trips' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-road"></i> Browse Trips</a>
+                <a href="{% url 'core:new_trip' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-plus"></i> New Trip</a>
+                <a href="{% url 'core:request_trip' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-question"></i> Request Trip</a>
+                <a href="{% url 'core:feed' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-newspaper"></i> Feed</a>
+                <a href="{% url 'core:chat' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-comments"></i> Chat</a>
+                <a href="{% url 'core:profile' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-user"></i> Profile</a>
+                {% if user.is_staff %}
+                    <a href="{% url 'core:admin_dashboard' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-user-shield"></i> Admin</a>
+                {% endif %}
+                <a href="{% url 'core:logout' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            {% else %}
+                <a href="{% url 'core:login' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-sign-in-alt"></i> Login</a>
+                <a href="{% url 'core:register' %}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-user-plus"></i> Register</a>
+            {% endif %}
+        </div>
+    </nav>
+    <main class="min-h-screen pt-20 pb-8">
+        {% if messages %}
+            <div id="messages" class="max-w-4xl mx-auto mt-4 space-y-2">
+                {% for message in messages %}
+                    <div class="message p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="bg-gray-800 text-white text-center py-4">
+        <p>© {{ 'now'|date:'Y' }} Gogo. All rights reserved.</p>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(msg => {
+                setTimeout(() => {
+                    msg.classList.add('hide');
+                    setTimeout(() => msg.remove(), 500);
+                }, 3000);
+            });
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

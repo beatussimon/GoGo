@@ -1,0 +1,176 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto mt-12 p-6 bg-white rounded-lg shadow-xl sm:max-w-4xl md:max-w-5xl">
+    <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg animate-fadeIn">
+        <h2 class="text-2xl sm:text-3xl font-semibold"><i class="fas fa-user mr-3"></i>Profile</h2>
+    </header>
+    <div class="p-6">
+        <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+            <img src="{{ profile.profile_pic.url }}" alt="Profile Pic" class="w-32 h-32 rounded-full border-4 border-blue-200">
+            <div class="text-center sm:text-left">
+                <p class="text-xl font-medium text-gray-800">{{ user.username }}
+                    {% if profile.verified %}
+                        <i class="fas fa-check-circle {% if profile.is_driver %}text-blue-500{% else %}text-green-500{% endif %} ml-2"></i>
+                    {% endif %}
+                </p>
+                <p class="text-gray-600">{{ profile.phone }}</p>
+                <p class="text-gray-600">{{ profile.bio|default:"No bio yet" }}</p>
+                <p class="text-gray-600">Hype Score: <span class="font-medium text-blue-600">{{ profile.hype_score|floatformat:1 }}</span></p>
+                <p class="text-gray-600">Driver: <span class="font-medium">{{ profile.is_driver|yesno:"Yes,No" }}</span></p>
+            </div>
+        </div>
+        <form method="post" enctype="multipart/form-data" class="space-y-6 mt-6">
+            {% csrf_token %}
+            <input type="hidden" name="update_profile" value="1">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Phone</label>
+                <input name="phone" value="{{ profile.phone }}" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Bio</label>
+                <textarea name="bio" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">{{ profile.bio }}</textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Profile Picture</label>
+                <input type="file" name="profile_pic" accept="image/*" class="w-full p-3 border rounded-lg">
+            </div>
+            <label class="flex items-center text-sm font-medium text-gray-700">
+                <input type="checkbox" name="is_driver" {% if profile.is_driver %}checked{% endif %} class="mr-2">
+                I am a Driver
+            </label>
+            <button type="submit" class="btn-primary w-full py-3 hover:bg-blue-700 transition duration-300">
+                <i class="fas fa-save mr-2"></i>Save Changes
+            </button>
+        </form>
+        {% if not profile.verified %}
+            <form method="post" enctype="multipart/form-data" class="mt-6 space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="request_verification" value="1">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">User Type</label>
+                    <select name="user_type" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                        <option value="passenger">Passenger</option>
+                        <option value="driver">Driver</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">NIDA Document</label>
+                    <input type="file" name="nida_doc" accept=".pdf,.jpg,.jpeg,.png" class="w-full p-3 border rounded-lg" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Driver's License (if Driver)</label>
+                    <input type="file" name="license_doc" accept=".pdf,.jpg,.jpeg,.png" class="w-full p-3 border rounded-lg">
+                </div>
+                <button type="submit" class="btn-primary w-full py-3 hover:bg-blue-700 transition duration-300">
+                    <i class="fas fa-check-circle mr-2"></i>Request Verification
+                </button>
+            </form>
+        {% endif %}
+        {% if verification_request %}
+            <div class="mt-6 text-center">
+                <p class="text-lg">Verification Status: <span class="font-medium {{ verification_request.status|lower }}">{{ verification_request.status|title }}</span></p>
+                {% if verification_request.status == 'rejected' and verification_request.comments %}
+                    <p class="text-red-600 mt-2">{{ verification_request.comments }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
+        <h3 class="text-xl sm:text-2xl font-semibold mt-8 mb-4 text-gray-800">Notifications</h3>
+        <div class="space-y-4 max-h-96 overflow-y-auto">
+            {% for notification in notifications %}
+                <div class="bg-gray-100 p-4 rounded-lg flex justify-between items-center hover:bg-gray-200 transition duration-300 fade-in-notification" data-index="{{ forloop.counter0 }}">
+                    <p class="text-gray-800">{{ notification.message }}</p>
+                    <a href="{% url 'core:mark_notification_read' notification.id %}" class="text-blue-600 hover:underline"><i class="fas fa-eye mr-1"></i>Mark as Read</a>
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center">No notifications.</p>
+            {% endfor %}
+        </div>
+        <h3 class="text-xl sm:text-2xl font-semibold mt-8 mb-4 text-gray-800">Your Trip Requests</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% for request in trip_requests %}
+                <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                    <p class="text-gray-800">{{ request.start }} to {{ request.end }}</p>
+                    <p class="text-gray-600">Date: {{ request.preferred_date }}</p>
+                    <p class="text-gray-600">Seats: {{ request.seats_needed }} | Cargo: {{ request.cargo_weight }} kg</p>
+                    <p class="text-gray-600">Status: {{ request.status|title }}</p>
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center col-span-full">No trip requests.</p>
+            {% endfor %}
+        </div>
+        <h3 class="text-xl sm:text-2xl font-semibold mt-8 mb-4 text-gray-800">Your Trips (Driver)</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% for trip in trips %}
+                <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                    <p class="text-gray-800">{{ trip.start }} to {{ trip.end }}</p>
+                    <p class="text-gray-600">Status: {{ trip.status }}</p>
+                    {% if trip.status == 'open' %}
+                        <a href="{% url 'core:cancel_trip' trip.id %}" class="text-red-600 hover:underline mt-2 inline-block">
+                            <i class="fas fa-times-circle mr-1"></i>Cancel
+                        </a>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center col-span-full">No trips.</p>
+            {% endfor %}
+        </div>
+        <h3 class="text-xl sm:text-2xl font-semibold mt-8 mb-4 text-gray-800">Your Bookings</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% for booking in bookings %}
+                <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                    <p class="text-gray-800">{{ booking.trip.start }} to {{ booking.trip.end }}</p>
+                    <p class="text-gray-600">Seats: {{ booking.seats }} | Cost: {{ booking.total_cost }} TZS</p>
+                    <p class="text-gray-600">Status: {{ booking.status }}</p>
+                    {% if booking.status == 'completed' %}
+                        <a href="{% url 'core:rate_trip' booking.id %}" class="text-blue-600 hover:underline mt-2 inline-block">
+                            <i class="fas fa-star mr-1"></i>Rate
+                        </a>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center col-span-full">No bookings.</p>
+            {% endfor %}
+        </div>
+        <h3 class="text-xl sm:text-2xl font-semibold mt-8 mb-4 text-gray-800">Your Posts</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% for post in posts %}
+                <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                    <p class="text-gray-800">{{ post.content }}</p>
+                    <p class="text-gray-600">{{ post.trip.start }} to {{ post.trip.end|default:"N/A" }}</p>
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center col-span-full">No posts.</p>
+            {% endfor %}
+        </div>
+        <h3 class="text-xl sm:text-2xl font-semibold mt-8 mb-4 text-gray-800">Your Clans</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% for clan in clans %}
+                <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                    <p class="text-gray-800">{{ clan.name }}</p>
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center col-span-full">No clans.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .fade-in-notification { animation: fadeIn 0.5s ease-in forwards; }
+    .pending { color: #f59e0b; }
+    .approved { color: #10b981; }
+    .rejected { color: #ef4444; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const notifications = document.querySelectorAll('.fade-in-notification');
+        notifications.forEach(notification => {
+            const index = notification.getAttribute('data-index');
+            notification.style.animationDelay = `${index * 100}ms`;
+        });
+    });
+</script>
+{% endblock %}

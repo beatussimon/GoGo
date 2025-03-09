@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-12 p-6 bg-white rounded-lg shadow-xl sm:max-w-5xl">
+    <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg animate-fadeIn">
+        <h2 class="text-2xl sm:text-3xl font-semibold"><i class="fas fa-comments mr-3"></i>Chat</h2>
+    </header>
+    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <form method="post" class="mb-6 space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Receiver</label>
+                    <select name="receiver" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                        <option value="">Select a user</option>
+                        {% for user in users %}
+                            <option value="{{ user.id }}" {% if user.id == receiver_id %}selected{% endif %}>{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Trip (Optional)</label>
+                    <select name="trip" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="">Select a trip</option>
+                        {% for trip in trips %}
+                            <option value="{{ trip.id }}">{{ trip.start }} to {{ trip.end }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Message</label>
+                    <textarea name="content" placeholder="Type your message..." class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required></textarea>
+                </div>
+                <button type="submit" class="btn-primary w-full py-3 hover:bg-blue-700 transition duration-300">
+                    <i class="fas fa-paper-plane mr-2"></i>Send
+                </button>
+            </form>
+        </div>
+        <div class="space-y-4 max-h-96 overflow-y-auto">
+            {% for message in messages %}
+                <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300 fade-in-message" data-index="{{ forloop.counter0 }}">
+                    <p class="text-gray-800">
+                        <strong>{{ message.sender.username }}</strong> to <strong>{{ message.receiver.username }}</strong>: {{ message.content }}
+                    </p>
+                    <p class="text-gray-600">Trip: {{ message.trip.start }} to {{ message.trip.end|default:"N/A" }}</p>
+                    <p class="text-gray-500 text-sm">{{ message.timestamp|date:'F d, Y H:i' }}</p>
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center">No messages yet.</p>
+            {% endfor %}
+            {% if messages.paginator.num_pages > 1 %}
+                <div class="mt-4 flex justify-center space-x-2">
+                    {% if messages.has_previous %}
+                        <a href="?page={{ messages.previous_page_number }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Previous</a>
+                    {% endif %}
+                    {% if messages.has_next %}
+                        <a href="?page={{ messages.next_page_number }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Next</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .fade-in-message {
+        animation: fadeIn 0.5s ease-in forwards;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const messages = document.querySelectorAll('.fade-in-message');
+        messages.forEach(message => {
+            const index = message.getAttribute('data-index');
+            message.style.animationDelay = `${index * 100}ms`;
+        });
+    });
+</script>
+{% endblock %}

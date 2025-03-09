@@ -1,0 +1,38 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-12 p-6 bg-white rounded-lg shadow-xl sm:max-w-5xl">
+    <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg animate-fadeIn">
+        <h2 class="text-2xl sm:text-3xl font-semibold"><i class="fas fa-user-shield mr-3"></i>Admin Dashboard</h2>
+    </header>
+    <div class="p-6">
+        <h3 class="text-xl sm:text-2xl font-semibold mb-4">Pending Verification Requests</h3>
+        <div class="space-y-6">
+            {% for request in verification_requests %}
+                <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                    <p class="text-gray-800">User: {{ request.user.username }}</p>
+                    <p class="text-gray-600">Type: {{ request.user_type|title }}</p>
+                    <p class="text-gray-600">Submitted: {{ request.submitted_at|date:'F d, Y H:i' }}</p>
+                    <div class="mt-2">
+                        <a href="{{ request.nida_doc.url }}" target="_blank" class="text-blue-600 hover:underline">View NIDA</a>
+                        {% if request.license_doc %}
+                            <a href="{{ request.license_doc.url }}" target="_blank" class="text-blue-600 hover:underline ml-2">View License</a>
+                        {% endif %}
+                    </div>
+                    <form method="post" class="mt-4 space-y-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="request_id" value="{{ request.id }}">
+                        <textarea name="comments" class="w-full p-2 border rounded-lg" placeholder="Comments (if rejecting)"></textarea>
+                        <div class="flex space-x-2">
+                            <button type="submit" name="action" value="approve" class="btn-primary py-2 px-4 hover:bg-green-700">Approve</button>
+                            <button type="submit" name="action" value="reject" class="py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700">Reject</button>
+                        </div>
+                    </form>
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center">No pending requests.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

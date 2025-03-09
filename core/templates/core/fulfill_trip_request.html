@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-12 p-6 bg-white rounded-lg shadow-xl sm:max-w-lg md:max-w-xl">
+    <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg animate-fadeIn">
+        <h2 class="text-2xl sm:text-3xl font-semibold"><i class="fas fa-check-square mr-3"></i>Fulfill Trip Request</h2>
+    </header>
+    <div class="p-6">
+        <p class="text-gray-800">Request: {{ trip_request.start }} to {{ trip_request.end }}</p>
+        <p class="text-gray-600">Seats Needed: {{ trip_request.seats_needed }}</p>
+        <p class="text-gray-600">Cargo Weight: {{ trip_request.cargo_weight }} kg</p>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Seats</label>
+                <input type="number" name="seats" min="{{ trip_request.seats_needed }}" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Cargo Capacity (kg)</label>
+                <input type="number" name="cargo_capacity" min="{{ trip_request.cargo_weight }}" step="0.1" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Price per Seat (TZS)</label>
+                <input type="number" name="price_per_seat" min="0" step="0.01" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Price per kg (TZS)</label>
+                <input type="number" name="price_per_kg" min="0" step="0.01" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" name="auction_mode" class="mr-2">
+                <label class="text-sm font-medium text-gray-700">Enable Auction Mode</label>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Departure</label>
+                <input type="datetime-local" name="departure" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+            </div>
+            <button type="submit" class="btn-primary w-full py-3 hover:bg-blue-700 transition duration-300">
+                <i class="fas fa-check-circle mr-2"></i>Fulfill Request
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

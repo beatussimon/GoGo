@@ -1,0 +1,46 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-12 p-6 bg-white rounded-lg shadow-xl sm:max-w-5xl">
+    <header class="text-center py-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg animate-fadeIn">
+        <h2 class="text-2xl sm:text-3xl font-semibold"><i class="fas fa-road mr-3"></i>Trips</h2>
+    </header>
+    <div class="p-6">
+        <form method="get" class="mb-6">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search by location..." class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+        </form>
+        <form method="post" class="mb-6 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            {% csrf_token %}
+            <select name="filter" class="p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
+                <option value="default">Sort By</option>
+                <option value="price">Price</option>
+                <option value="seats">Seats</option>
+                <option value="cargo">Cargo Capacity</option>
+            </select>
+            <button type="submit" class="btn-primary py-3 px-4 hover:bg-blue-700 transition duration-300">Apply</button>
+        </form>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {% for trip in trips %}
+                <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition duration-300">
+                    <p class="text-gray-800">{{ trip.start }} to {{ trip.end }}</p>
+                    <p class="text-gray-600">Seats: {{ trip.seats }} | Price: {{ trip.price_per_seat }} TZS/seat</p>
+                    <p class="text-gray-600">Departure: {{ trip.departure|date:'F d, Y H:i' }}</p>
+                    <a href="{% url 'core:book_trip' trip.id %}" class="text-blue-600 hover:underline mt-2 inline-block">Book Now</a>
+                </div>
+            {% empty %}
+                <p class="text-gray-600 text-center col-span-full">No trips found.</p>
+            {% endfor %}
+        </div>
+        {% if trips.paginator.num_pages > 1 %}
+            <div class="mt-6 flex justify-center space-x-2">
+                {% if trips.has_previous %}
+                    <a href="?page={{ trips.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Previous</a>
+                {% endif %}
+                {% if trips.has_next %}
+                    <a href="?page={{ trips.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Next</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
